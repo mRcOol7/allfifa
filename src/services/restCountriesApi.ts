@@ -4,14 +4,13 @@ import { FALLBACK_COUNTRIES_DATA } from './fallbackCountriesData';
 const REST_COUNTRIES_V5_DIRECT = 'https://api.restcountries.com/countries/v5';
 const REST_COUNTRIES_V5_PROXY = '/api-restcountries/countries/v5';
 
-// API Key configuration: Reads from import.meta.env.VITE_REST_COUNTRIES_BEARER_TOKEN if present
-const RAW_ENV_TOKEN = import.meta.env.VITE_REST_COUNTRIES_BEARER_TOKEN;
-const DEFAULT_KEY = 'rc_live_3ddccde8406b46e2b0edc5858d9c6033';
+// Read API token strictly from environment variable (.env)
+const RAW_ENV_TOKEN = import.meta.env.VITE_REST_COUNTRIES_BEARER_TOKEN || '';
+const BEARER_TOKEN = RAW_ENV_TOKEN
+  ? (RAW_ENV_TOKEN.startsWith('Bearer ') ? RAW_ENV_TOKEN : `Bearer ${RAW_ENV_TOKEN}`)
+  : '';
 
-const ACTIVE_TOKEN = RAW_ENV_TOKEN || DEFAULT_KEY;
-const BEARER_TOKEN = ACTIVE_TOKEN.startsWith('Bearer ') ? ACTIVE_TOKEN : `Bearer ${ACTIVE_TOKEN}`;
-
-const CACHE_KEY = 'world_cup_sim_v5_countries_cache_v4';
+const CACHE_KEY = 'world_cup_sim_v5_countries_cache_v5';
 
 export interface FetchCountriesResult {
   allCountries: Country[];
@@ -32,54 +31,54 @@ export async function fetchRestCountriesV5(): Promise<FetchCountriesResult> {
     console.warn('LocalStorage error reading country cache:', e);
   }
 
-  // 2. Try Fetching via Vite Proxy or Direct REST Countries v5 API
+  // 2. Try Fetching via Vite Proxy or Direct REST Countries v5 API if Bearer token exists
   const rawObjects: any[] = [];
   let fetchSuccessful = false;
 
-  // Endpoint candidates: Proxy path first to bypass CORS, then Direct path
-  const endpointCandidates = [REST_COUNTRIES_V5_PROXY, REST_COUNTRIES_V5_DIRECT];
+  if (BEARER_TOKEN) {
+    const endpointCandidates = [REST_COUNTRIES_V5_PROXY, REST_COUNTRIES_V5_DIRECT];
 
-  for (const baseUrl of endpointCandidates) {
-    try {
-      rawObjects.length = 0; // reset
-      let hasMore = true;
+    for (const baseUrl of endpointCandidates) {
+      try {
+        rawObjects.length = 0; // reset
+        let hasMore = true;
 
-      for (let offset = 0; offset < 350 && hasMore; offset += 25) {
-        const response = await fetch(`${baseUrl}?offset=${offset}`, {
-          headers: {
-            'Authorization': BEARER_TOKEN
+        for (let offset = 0; offset < 350 && hasMore; offset += 25) {
+          const response = await fetch(`${baseUrl}?offset=${offset}`, {
+            headers: {
+              'Authorization': BEARER_TOKEN
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status} from ${baseUrl}`);
           }
-        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error ${response.status} from ${baseUrl}`);
+          const data = await response.json();
+
+          if (data.errors && data.errors.length > 0) {
+            throw new Error(`API error: ${data.errors[0].message}`);
+          }
+
+          const items = data.data?.objects || (Array.isArray(data.data) ? data.data : []);
+          if (!items || items.length === 0) {
+            hasMore = false;
+            break;
+          }
+
+          rawObjects.push(...items);
+          if (data.data?.more === false) {
+            hasMore = false;
+          }
         }
 
-        const data = await response.json();
-
-        // Check for REST Countries API error object
-        if (data.errors && data.errors.length > 0) {
-          throw new Error(`API error: ${data.errors[0].message}`);
-        }
-
-        const items = data.data?.objects || (Array.isArray(data.data) ? data.data : []);
-        if (!items || items.length === 0) {
-          hasMore = false;
+        if (rawObjects.length > 50) {
+          fetchSuccessful = true;
           break;
         }
-
-        rawObjects.push(...items);
-        if (data.data?.more === false) {
-          hasMore = false;
-        }
+      } catch (err) {
+        console.warn(`Fetch candidate ${baseUrl} failed:`, err);
       }
-
-      if (rawObjects.length > 50) {
-        fetchSuccessful = true;
-        break; // Successfully retrieved API data
-      }
-    } catch (err) {
-      console.warn(`Fetch candidate ${baseUrl} failed:`, err);
     }
   }
 
@@ -126,7 +125,7 @@ export async function fetchRestCountriesV5(): Promise<FetchCountriesResult> {
       };
     });
   } else {
-    // 4. Fallback to complete offline dataset if API/CORS is blocked
+    // 4. Fallback to complete offline dataset if API key is missing or request failed
     console.info('Using offline sovereign country dataset fallback');
     allCountries = (FALLBACK_COUNTRIES_DATA as any[]).map((c: any, idx: number) => ({
       id: c.id || c.cca3 || `fb_${idx}`,
