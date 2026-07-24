@@ -1,7 +1,7 @@
 import { Country } from '../types/simulator';
 
 // Comprehensive fallback dataset for all major and minor nations on Earth (~210 nations)
-export const FALLBACK_COUNTRIES_DATA: Country[] = [
+export const FALLBACK_COUNTRIES_DATA: any[] = [
   {
     id: 'ARG', cca2: 'AR', name: 'Argentina', officialName: 'Argentine Republic',
     flagSvg: 'https://flagcdn.com/ar.svg', flagPng: 'https://flagcdn.com/w320/ar.png',
