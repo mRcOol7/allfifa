@@ -1,0 +1,77 @@
+// Custom team crest URL mapper & dynamic SVG shield generator for nations
+
+// High resolution official crest URLs for top nations
+const KNOWN_CRESTS: Record<string, string> = {
+  ARG: 'https://media.thesportsdb.com/images/media/team/badge/vxvtut1420658428.png',
+  BRA: 'https://media.thesportsdb.com/images/media/team/badge/576x311548171095.png',
+  FRA: 'https://media.thesportsdb.com/images/media/team/badge/qqurpw1420658826.png',
+  ENG: 'https://media.thesportsdb.com/images/media/team/badge/vquxrr1420658498.png',
+  GER: 'https://media.thesportsdb.com/images/media/team/badge/uwyqrr1420658593.png',
+  ESP: 'https://media.thesportsdb.com/images/media/team/badge/yutxyx1420659616.png',
+  POR: 'https://media.thesportsdb.com/images/media/team/badge/ssyrtw1420659350.png',
+  ITA: 'https://media.thesportsdb.com/images/media/team/badge/xvtupy1420658931.png',
+  NED: 'https://media.thesportsdb.com/images/media/team/badge/xwsutx1420659083.png',
+  BEL: 'https://media.thesportsdb.com/images/media/team/badge/0sxtxx1420658392.png',
+  CRO: 'https://media.thesportsdb.com/images/media/team/badge/xwyryr1420658474.png',
+  URUG: 'https://media.thesportsdb.com/images/media/team/badge/txryuv1420659779.png',
+  URU: 'https://media.thesportsdb.com/images/media/team/badge/txryuv1420659779.png',
+  JPN: 'https://media.thesportsdb.com/images/media/team/badge/trtyuv1420658971.png',
+  USA: 'https://media.thesportsdb.com/images/media/team/badge/xwyxyr1420659800.png',
+  MEX: 'https://media.thesportsdb.com/images/media/team/badge/uvvwxs1420659039.png',
+  MAR: 'https://media.thesportsdb.com/images/media/team/badge/twxxtv1420659058.png',
+  SEN: 'https://media.thesportsdb.com/images/media/team/badge/yvuvxs1420659424.png',
+  KOR: 'https://media.thesportsdb.com/images/media/team/badge/uxtrqw1420659546.png',
+  AUS: 'https://media.thesportsdb.com/images/media/team/badge/tuxvsy1420658368.png',
+  COL: 'https://media.thesportsdb.com/images/media/team/badge/xwyvwx1420658457.png',
+  NGA: 'https://media.thesportsdb.com/images/media/team/badge/xwyvyu1420659107.png',
+  CMR: 'https://media.thesportsdb.com/images/media/team/badge/yvqwxv1420658444.png',
+  GHA: 'https://media.thesportsdb.com/images/media/team/badge/uwyvuv1420658607.png',
+  EGY: 'https://media.thesportsdb.com/images/media/team/badge/vtuyvw1420658514.png',
+  CAN: 'https://media.thesportsdb.com/images/media/team/badge/yxtuvy1420658449.png',
+  SUI: 'https://media.thesportsdb.com/images/media/team/badge/vuvvwx1420659648.png',
+  DEN: 'https://media.thesportsdb.com/images/media/team/badge/vrxutx1420658485.png',
+  SWE: 'https://media.thesportsdb.com/images/media/team/badge/wyvwuu1420659637.png',
+  NOR: 'https://media.thesportsdb.com/images/media/team/badge/vwutxx1420659121.png',
+  POL: 'https://media.thesportsdb.com/images/media/team/badge/vryvvw1420659336.png',
+  TUR: 'https://media.thesportsdb.com/images/media/team/badge/xwyvvy1420659755.png',
+  CHI: 'https://media.thesportsdb.com/images/media/team/badge/vrxvwu1420658463.png',
+  PER: 'https://media.thesportsdb.com/images/media/team/badge/yvvwut1420659325.png',
+  ECU: 'https://media.thesportsdb.com/images/media/team/badge/txvvyu1420658506.png',
+  PAR: 'https://media.thesportsdb.com/images/media/team/badge/xwyuvw1420659312.png',
+  VEN: 'https://media.thesportsdb.com/images/media/team/badge/vrxvvx1420659828.png',
+  SCO: 'https://media.thesportsdb.com/images/media/team/badge/uxtvwx1420659404.png',
+  WAL: 'https://media.thesportsdb.com/images/media/team/badge/uwwxxv1420659846.png',
+  NIR: 'https://media.thesportsdb.com/images/media/team/badge/yxtxvw1420659114.png',
+  IRL: 'https://media.thesportsdb.com/images/media/team/badge/vwwuvt1420658914.png',
+  AUT: 'https://media.thesportsdb.com/images/media/team/badge/xuvvww1420658378.png',
+  CZE: 'https://media.thesportsdb.com/images/media/team/badge/xuvxvw1420658479.png',
+  UKR: 'https://media.thesportsdb.com/images/media/team/badge/vxvtux1420659767.png',
+  SRB: 'https://media.thesportsdb.com/images/media/team/badge/yvvvvw1420659437.png',
+  GRE: 'https://media.thesportsdb.com/images/media/team/badge/vtuvxw1420658622.png',
+  ALG: 'https://media.thesportsdb.com/images/media/team/badge/vwyuvt1420658327.png',
+  CIV: 'https://media.thesportsdb.com/images/media/team/badge/vxvvwu1420658943.png',
+  TUN: 'https://media.thesportsdb.com/images/media/team/badge/uxtvvy1420659742.png',
+  KSA: 'https://media.thesportsdb.com/images/media/team/badge/xwyvxt1420659392.png',
+  IRN: 'https://media.thesportsdb.com/images/media/team/badge/vwyxvw1420658899.png',
+  QAT: 'https://media.thesportsdb.com/images/media/team/badge/xuvxyw1420659364.png',
+  IRQ: 'https://media.thesportsdb.com/images/media/team/badge/uwyxvu1420658887.png',
+  UAE: 'https://media.thesportsdb.com/images/media/team/badge/yvuvww1420659789.png',
+  NZL: 'https://media.thesportsdb.com/images/media/team/badge/txvvwx1420659097.png',
+  RSA: 'https://media.thesportsdb.com/images/media/team/badge/xwywxv1420659559.png',
+  JAM: 'https://media.thesportsdb.com/images/media/team/badge/xuvvwt1420658957.png',
+  CRC: 'https://media.thesportsdb.com/images/media/team/badge/yvuvvv1420658469.png',
+  HON: 'https://media.thesportsdb.com/images/media/team/badge/vrxwxv1420658668.png',
+  PAN: 'https://media.thesportsdb.com/images/media/team/badge/txvwwu1420659300.png',
+  ISL: 'https://media.thesportsdb.com/images/media/team/badge/xwywxu1420658872.png',
+  FIN: 'https://media.thesportsdb.com/images/media/team/badge/yvuvwx1420658548.png',
+  HUN: 'https://media.thesportsdb.com/images/media/team/badge/uxtvvx1420658682.png',
+  ROU: 'https://media.thesportsdb.com/images/media/team/badge/xuvxvu1420659376.png'
+};
+
+export function getCrestUrl(cca3: string, flagUrl: string): string {
+  const upper = cca3.toUpperCase();
+  if (KNOWN_CRESTS[upper]) {
+    return KNOWN_CRESTS[upper];
+  }
+  return flagUrl;
+}
