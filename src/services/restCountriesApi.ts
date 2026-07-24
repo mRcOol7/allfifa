@@ -35,6 +35,10 @@ export async function fetchRestCountriesV5(): Promise<FetchCountriesResult> {
   const rawObjects: any[] = [];
   let fetchSuccessful = false;
 
+  if (!BEARER_TOKEN) {
+    console.warn('VITE_REST_COUNTRIES_BEARER_TOKEN is missing in environment variables. Set VITE_REST_COUNTRIES_BEARER_TOKEN in Vercel project settings.');
+  }
+
   if (BEARER_TOKEN) {
     const endpointCandidates = [REST_COUNTRIES_V5_PROXY, REST_COUNTRIES_V5_DIRECT];
 
