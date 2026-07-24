@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Country } from '../types/simulator';
 import { useSimulatorStore } from '../store/useSimulatorStore';
 import { getFullFootballSquad, FootballPlayerProfile } from '../engine/playerNames';
+import { fetchGoalHighlightsFromApi, getRandomGoalHighlight } from '../engine/goalHighlightsData';
 import { soundFx } from '../utils/soundFx';
 import { X, Play, Pause, RotateCcw, Zap, Flame, Shield, Trophy, Activity, Award, Star, BarChart2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -378,6 +379,7 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
   useEffect(() => {
     if (!homeTeam && allCountries.length > 0) setHomeTeam(allCountries[0]);
     if (!awayTeam && allCountries.length > 1) setAwayTeam(allCountries[1]);
+    fetchGoalHighlightsFromApi();
   }, [allCountries]);
 
   // Generate squads & reset match when teams change
@@ -554,10 +556,22 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     // 1. GOAL Chance (~4% per minute)
     if (rand < 0.04) {
       soundFx.playGoal();
-      const targetY = Math.floor(Math.random() * 20) + 40;
-      setBallPos({ x: targetGoalX, y: targetY });
-      animateIndividualPlayerMovement(targetGoalX, targetY, isHomeEvent);
-      setBallActionText(`⚽ GOAL! ${randomPlayer} scores for ${activeTeam.name}!`);
+      const pattern = getRandomGoalHighlight(targetGoalX > 50 ? 'right' : 'left');
+
+      if (pattern && pattern.ballPath && pattern.ballPath.length > 0) {
+        pattern.ballPath.forEach((pt, stepIdx) => {
+          setTimeout(() => {
+            setBallPos({ x: pt.x, y: pt.y });
+            animateIndividualPlayerMovement(pt.x, pt.y, isHomeEvent);
+          }, stepIdx * 140);
+        });
+      } else {
+        const targetY = Math.floor(Math.random() * 20) + 40;
+        setBallPos({ x: targetGoalX, y: targetY });
+        animateIndividualPlayerMovement(targetGoalX, targetY, isHomeEvent);
+      }
+
+      setBallActionText(`⚽ GOAL! ${randomPlayer} scores for ${activeTeam.name}! (${pattern?.assisted ? 'Assisted Build-up' : 'Direct Strike'})`);
       setLastActionType('GOAL');
 
       if (isHomeEvent) {
