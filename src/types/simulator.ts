@@ -18,6 +18,39 @@ export interface MatchScorer {
   player: string;
   teamId: string;
   teamName: string;
+  minute?: number;
+  minuteDisplay?: string;
+  goalType?: string;
+}
+
+export interface MatchEvent {
+  id: string;
+  minute: number;
+  minuteDisplay: string;
+  type: 'GOAL' | 'PENALTY_GOAL' | 'YELLOW_CARD' | 'RED_CARD';
+  teamId: string;
+  teamName: string;
+  player: string;
+  detail?: string;
+}
+
+export interface MatchStats {
+  possessionHome: number;
+  possessionAway: number;
+  shotsHome: number;
+  shotsAway: number;
+  shotsOnTargetHome: number;
+  shotsOnTargetAway: number;
+  cornersHome: number;
+  cornersAway: number;
+  foulsHome: number;
+  foulsAway: number;
+  yellowCardsHome: number;
+  yellowCardsAway: number;
+  redCardsHome: number;
+  redCardsAway: number;
+  passAccuracyHome: number;
+  passAccuracyAway: number;
 }
 
 export interface Match {
@@ -34,6 +67,10 @@ export interface Match {
   winnerId?: string;
   isBye?: boolean;
   scorers?: MatchScorer[];
+  stadium?: string;
+  referee?: string;
+  events?: MatchEvent[];
+  stats?: MatchStats;
 }
 
 export interface Round {
@@ -51,10 +88,19 @@ export interface TournamentAwards {
     team: Country;
     goals: number;
   };
+  topScorersList?: Array<{
+    player: string;
+    team: Country;
+    goals: number;
+  }>;
   mostCleanSheets?: {
     team: Country;
     cleanSheets: number;
   };
+  topCleanSheetsList?: Array<{
+    team: Country;
+    cleanSheets: number;
+  }>;
   totalGoals: number;
   totalMatches: number;
 }
@@ -70,5 +116,19 @@ export interface Tournament {
   champion?: Country;
   runnerUp?: Country;
   awards?: TournamentAwards;
+  createdAt: string;
+}
+
+export interface SavedTournament {
+  id: string;
+  name: string;
+  bracketSize: number | string;
+  champion: Country;
+  runnerUp?: Country;
+  topScorerPlayer?: string;
+  topScorerGoals?: number;
+  topScorerTeamName?: string;
+  totalGoals: number;
+  totalMatches: number;
   createdAt: string;
 }
