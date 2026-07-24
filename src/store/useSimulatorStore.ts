@@ -14,6 +14,7 @@ interface SimulatorState {
   isDirectoryOpen: boolean;
   isHallOfFameOpen: boolean;
   isH2HOpen: boolean;
+  isLiveSimulatorOpen: boolean;
   savedTournaments: SavedTournament[];
 
   // Actions
@@ -26,6 +27,7 @@ interface SimulatorState {
   toggleDirectory: (open?: boolean) => void;
   toggleHallOfFame: (open?: boolean) => void;
   toggleH2H: (open?: boolean) => void;
+  toggleLiveSimulator: (open?: boolean) => void;
   clearHallOfFame: () => void;
 }
 
@@ -38,6 +40,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   isDirectoryOpen: false,
   isHallOfFameOpen: false,
   isH2HOpen: false,
+  isLiveSimulatorOpen: false,
   savedTournaments: [],
 
   loadCountries: async () => {
@@ -130,6 +133,12 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   toggleH2H: (open) => {
     set((state) => ({
       isH2HOpen: open !== undefined ? open : !state.isH2HOpen
+    }));
+  },
+
+  toggleLiveSimulator: (open) => {
+    set((state) => ({
+      isLiveSimulatorOpen: open !== undefined ? open : !state.isLiveSimulatorOpen
     }));
   },
 

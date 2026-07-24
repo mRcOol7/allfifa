@@ -5,8 +5,9 @@ import { CountryDirectory } from './components/CountryDirectory';
 import { ChampionCelebration } from './components/ChampionCelebration';
 import { HallOfFameModal } from './components/HallOfFameModal';
 import { H2HPredictorModal } from './components/H2HPredictorModal';
+import { LiveMatchSimulatorModal } from './components/LiveMatchSimulatorModal';
 import { TournamentBracketSize } from './types/simulator';
-import { Trophy, Globe, Play, ChevronRight, RefreshCw, ShieldCheck, Sparkles, Medal, Swords } from 'lucide-react';
+import { Trophy, Globe, Play, ChevronRight, RefreshCw, ShieldCheck, Sparkles, Medal, Swords, Zap } from 'lucide-react';
 
 export const App: React.FC = () => {
   const {
@@ -16,6 +17,7 @@ export const App: React.FC = () => {
     currentTournament,
     bracketSize,
     savedTournaments,
+    isLiveSimulatorOpen,
     loadCountries,
     setBracketSize,
     startTournament,
@@ -23,7 +25,8 @@ export const App: React.FC = () => {
     resetTournament,
     toggleDirectory,
     toggleHallOfFame,
-    toggleH2H
+    toggleH2H,
+    toggleLiveSimulator
   } = useSimulatorStore();
 
   useEffect(() => {
@@ -80,6 +83,15 @@ export const App: React.FC = () => {
 
           {/* Header Action Controls */}
           <div className="flex items-center space-x-2.5">
+            {/* Live Ticker Match Trigger */}
+            <button
+              onClick={() => toggleLiveSimulator(true)}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 hover:scale-105 text-xs font-extrabold flex items-center space-x-1.5 transition shadow-lg shadow-emerald-500/20"
+            >
+              <Zap className="w-4 h-4 fill-slate-950" />
+              <span>Live Ticker</span>
+            </button>
+
             {/* H2H Exhibition Button */}
             <button
               onClick={() => toggleH2H(true)}
@@ -107,7 +119,7 @@ export const App: React.FC = () => {
               className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-xs text-slate-300 flex items-center space-x-2 transition"
             >
               <Globe className="w-4 h-4 text-emerald-400" />
-              <span className="hidden sm:inline font-medium">Browse All Nations</span>
+              <span className="hidden sm:inline font-medium font-sans">Browse Nations</span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-mono text-[10px] border border-emerald-500/30">
                 {allCountries.length}
               </span>
@@ -149,18 +161,10 @@ export const App: React.FC = () => {
                   }}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs font-medium text-slate-200 focus:outline-none focus:border-emerald-500 transition"
                 >
-                  <option value={256}>
-                    256 Teams Mega Bracket (128 Matches in R1 • All 256 teams play!)
-                  </option>
-                  <option value={128}>
-                    128 Teams Bracket (64 Matches in R1)
-                  </option>
-                  <option value={64}>
-                    64 Teams Bracket (32 Matches in R1)
-                  </option>
-                  <option value={32}>
-                    32 Teams Bracket (16 Matches in R1)
-                  </option>
+                  <option value={256}>256 Teams Mega Bracket (128 Matches in R1)</option>
+                  <option value={128}>128 Teams Bracket (64 Matches in R1)</option>
+                  <option value={64}>64 Teams Bracket (32 Matches in R1)</option>
+                  <option value={32}>32 Teams Bracket (16 Matches in R1)</option>
                 </select>
               </div>
 
@@ -207,6 +211,12 @@ export const App: React.FC = () => {
         )}
 
       </main>
+
+      {/* Live 90-Min Football Match Ticker Modal */}
+      <LiveMatchSimulatorModal
+        isOpen={isLiveSimulatorOpen}
+        onClose={() => toggleLiveSimulator(false)}
+      />
 
       {/* Champion Celebration Modal */}
       {currentTournament && currentTournament.status === 'COMPLETED' && (

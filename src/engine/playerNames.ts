@@ -145,3 +145,34 @@ export function getRandomPlayerName(
   const list = regBank[position] || regBank.strikers;
   return list[Math.floor(Math.random() * list.length)];
 }
+
+export interface FootballPlayerProfile {
+  name: string;
+  position: 'GK' | 'DEF' | 'MID' | 'ST';
+  ovr: number;
+}
+
+export function getFullFootballSquad(countryId: string, region: string): FootballPlayerProfile[] {
+  const gk = getRandomPlayerName(countryId, region, 'goalkeepers');
+  const d1 = getRandomPlayerName(countryId, region, 'defenders');
+  const d2 = getRandomPlayerName(countryId, region, 'defenders');
+  const d3 = getRandomPlayerName(countryId, region, 'defenders');
+  const d4 = getRandomPlayerName(countryId, region, 'defenders');
+  const m1 = getRandomPlayerName(countryId, region, 'midfielders');
+  const m2 = getRandomPlayerName(countryId, region, 'midfielders');
+  const m3 = getRandomPlayerName(countryId, region, 'midfielders');
+  const m4 = getRandomPlayerName(countryId, region, 'midfielders');
+  const s1 = getRandomPlayerName(countryId, region, 'strikers');
+  const s2 = getRandomPlayerName(countryId, region, 'strikers');
+
+  // Deduplicate names if random selection overlaps
+  const squadNames = Array.from(new Set([gk, d1, d2, d3, d4, m1, m2, m3, m4, s1, s2]));
+  const positions: Array<'GK' | 'DEF' | 'MID' | 'ST'> = ['GK', 'DEF', 'DEF', 'DEF', 'DEF', 'MID', 'MID', 'MID', 'MID', 'ST', 'ST'];
+
+  return squadNames.map((name, i) => ({
+    name,
+    position: positions[i] || 'ST',
+    ovr: Math.floor(Math.random() * 12) + 84 // 84 to 95 OVR
+  }));
+}
+
