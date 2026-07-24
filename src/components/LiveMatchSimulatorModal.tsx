@@ -6,33 +6,285 @@ import { soundFx } from '../utils/soundFx';
 import { X, Play, Pause, RotateCcw, Zap, Flame, Shield, Trophy, Activity, Award, Star, BarChart2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const HOME_1ST_HALF = [
-  { x: 5, y: 50 },
-  { x: 18, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 18, y: 80 },
-  { x: 35, y: 30 }, { x: 38, y: 50 }, { x: 35, y: 70 },
-  { x: 45, y: 25 }, { x: 48, y: 50 }, { x: 45, y: 75 },
-];
+const getFormationPositions = (formation: '4-3-3' | '4-2-3-1' | '3-5-2' | '4-4-2', isLeft: boolean) => {
+  if (formation === '4-3-3') {
+    return isLeft ? [
+      { x: 5, y: 50 }, // GK
+      { x: 18, y: 18 }, { x: 20, y: 38 }, { x: 20, y: 62 }, { x: 18, y: 82 }, // 4 DEF
+      { x: 34, y: 28 }, { x: 36, y: 50 }, { x: 34, y: 72 }, // 3 MID
+      { x: 45, y: 22 }, { x: 48, y: 50 }, { x: 45, y: 78 }  // 3 FWD
+    ] : [
+      { x: 95, y: 50 }, // GK
+      { x: 82, y: 18 }, { x: 80, y: 38 }, { x: 80, y: 62 }, { x: 82, y: 82 }, // 4 DEF
+      { x: 66, y: 28 }, { x: 64, y: 50 }, { x: 66, y: 72 }, // 3 MID
+      { x: 55, y: 22 }, { x: 52, y: 50 }, { x: 55, y: 78 }  // 3 FWD
+    ];
+  }
 
-const AWAY_1ST_HALF = [
-  { x: 95, y: 50 },
-  { x: 82, y: 20 }, { x: 80, y: 40 }, { x: 80, y: 60 }, { x: 82, y: 80 },
-  { x: 65, y: 30 }, { x: 62, y: 50 }, { x: 65, y: 70 },
-  { x: 55, y: 25 }, { x: 52, y: 50 }, { x: 55, y: 75 },
-];
+  if (formation === '4-2-3-1') {
+    return isLeft ? [
+      { x: 5, y: 50 }, // GK
+      { x: 18, y: 18 }, { x: 20, y: 38 }, { x: 20, y: 62 }, { x: 18, y: 82 }, // 4 DEF
+      { x: 30, y: 35 }, { x: 30, y: 65 }, // 2 CDM
+      { x: 40, y: 22 }, { x: 42, y: 50 }, { x: 40, y: 78 }, // 3 AM
+      { x: 48, y: 50 } // 1 ST
+    ] : [
+      { x: 95, y: 50 }, // GK
+      { x: 82, y: 18 }, { x: 80, y: 38 }, { x: 80, y: 62 }, { x: 82, y: 82 }, // 4 DEF
+      { x: 70, y: 35 }, { x: 70, y: 65 }, // 2 CDM
+      { x: 60, y: 22 }, { x: 58, y: 50 }, { x: 60, y: 78 }, // 3 AM
+      { x: 52, y: 50 } // 1 ST
+    ];
+  }
 
-const HOME_2ND_HALF = [
-  { x: 95, y: 50 },
-  { x: 82, y: 20 }, { x: 80, y: 40 }, { x: 80, y: 60 }, { x: 82, y: 80 },
-  { x: 65, y: 30 }, { x: 62, y: 50 }, { x: 65, y: 70 },
-  { x: 55, y: 25 }, { x: 52, y: 50 }, { x: 55, y: 75 },
-];
+  if (formation === '3-5-2') {
+    return isLeft ? [
+      { x: 5, y: 50 }, // GK
+      { x: 20, y: 25 }, { x: 22, y: 50 }, { x: 20, y: 75 }, // 3 CB
+      { x: 35, y: 12 }, { x: 36, y: 33 }, { x: 38, y: 50 }, { x: 36, y: 67 }, { x: 35, y: 88 }, // 5 MID
+      { x: 47, y: 35 }, { x: 47, y: 65 } // 2 ST
+    ] : [
+      { x: 95, y: 50 }, // GK
+      { x: 80, y: 25 }, { x: 78, y: 50 }, { x: 80, y: 75 }, // 3 CB
+      { x: 65, y: 12 }, { x: 64, y: 33 }, { x: 62, y: 50 }, { x: 64, y: 67 }, { x: 65, y: 88 }, // 5 MID
+      { x: 53, y: 35 }, { x: 53, y: 65 } // 2 ST
+    ];
+  }
 
-const AWAY_2ND_HALF = [
-  { x: 5, y: 50 },
-  { x: 18, y: 20 }, { x: 20, y: 40 }, { x: 20, y: 60 }, { x: 18, y: 80 },
-  { x: 35, y: 30 }, { x: 38, y: 50 }, { x: 35, y: 70 },
-  { x: 45, y: 25 }, { x: 48, y: 50 }, { x: 45, y: 75 },
-];
+  // 4-4-2
+  return isLeft ? [
+    { x: 5, y: 50 }, // GK
+    { x: 18, y: 18 }, { x: 20, y: 38 }, { x: 20, y: 62 }, { x: 18, y: 82 }, // 4 DEF
+    { x: 36, y: 15 }, { x: 38, y: 38 }, { x: 38, y: 62 }, { x: 36, y: 85 }, // 4 MID
+    { x: 48, y: 35 }, { x: 48, y: 65 } // 2 ST
+  ] : [
+    { x: 95, y: 50 }, // GK
+    { x: 82, y: 18 }, { x: 80, y: 38 }, { x: 80, y: 62 }, { x: 82, y: 82 }, // 4 DEF
+    { x: 64, y: 15 }, { x: 62, y: 38 }, { x: 62, y: 62 }, { x: 64, y: 85 }, // 4 MID
+    { x: 52, y: 35 }, { x: 52, y: 65 } // 2 ST
+  ];
+};
+
+const SearchableCountrySelect: React.FC<{
+  selectedCountry: Country;
+  onSelect: (c: Country) => void;
+  label: string;
+  allCountries: Country[];
+}> = ({ selectedCountry, onSelect, label, allCountries }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filtered = allCountries.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.region.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-left flex items-center justify-between text-slate-200 text-xs font-bold focus:outline-none hover:border-slate-700 transition"
+      >
+        <span className="truncate flex items-center space-x-1.5">
+          <span>{selectedCountry.emoji}</span>
+          <span>{selectedCountry.name}</span>
+        </span>
+        <span className="text-[10px] text-emerald-400 font-mono">🔍 Search</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 p-2 space-y-2 flex flex-col">
+          <input
+            type="text"
+            placeholder="Type country name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+            autoFocus
+          />
+          <div className="overflow-y-auto max-h-44 space-y-0.5 pr-1 scrollbar-thin">
+            {filtered.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => {
+                  onSelect(c);
+                  setIsOpen(false);
+                  setSearch('');
+                }}
+                className={`w-full text-left p-1.5 rounded-lg text-xs flex items-center space-x-2 transition ${
+                  c.id === selectedCountry.id ? 'bg-emerald-500 text-slate-950 font-bold' : 'hover:bg-slate-800 text-slate-200'
+                }`}
+              >
+                <span>{c.emoji}</span>
+                <span className="truncate">{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const FotMobPitchCard: React.FC<{
+  team: Country;
+  squad: FootballPlayerProfile[];
+  formation: '4-3-3' | '4-2-3-1' | '3-5-2' | '4-4-2';
+  shirtColor: 'RED' | 'BLUE';
+  goalscorers: Array<{ name: string; minute: number }>;
+  substitutions: Array<{ minute: number; teamName: string; playerIn: string; playerOut: string }>;
+}> = ({ team, squad, formation, shirtColor, goalscorers, substitutions }) => {
+  const starting11 = squad.slice(0, 11);
+  const bench = squad.slice(11, 19);
+
+  const getVerticalPositions = (fmt: string) => {
+    if (fmt === '4-3-3') {
+      return [
+        { x: 50, y: 88 }, // GK
+        { x: 18, y: 70 }, { x: 38, y: 72 }, { x: 62, y: 72 }, { x: 82, y: 70 }, // 4 DEF
+        { x: 28, y: 48 }, { x: 50, y: 52 }, { x: 72, y: 48 }, // 3 MID
+        { x: 22, y: 22 }, { x: 50, y: 16 }, { x: 78, y: 22 }  // 3 FWD
+      ];
+    }
+    if (fmt === '4-2-3-1') {
+      return [
+        { x: 50, y: 88 }, // GK
+        { x: 18, y: 70 }, { x: 38, y: 72 }, { x: 62, y: 72 }, { x: 82, y: 70 }, // 4 DEF
+        { x: 35, y: 55 }, { x: 65, y: 55 }, // 2 CDM
+        { x: 22, y: 34 }, { x: 50, y: 32 }, { x: 78, y: 34 }, // 3 AM
+        { x: 50, y: 15 }  // 1 ST
+      ];
+    }
+    if (fmt === '3-5-2') {
+      return [
+        { x: 50, y: 88 }, // GK
+        { x: 25, y: 72 }, { x: 50, y: 74 }, { x: 75, y: 72 }, // 3 CB
+        { x: 14, y: 48 }, { x: 32, y: 50 }, { x: 50, y: 52 }, { x: 68, y: 50 }, { x: 86, y: 48 }, // 5 MID
+        { x: 35, y: 18 }, { x: 65, y: 18 }  // 2 ST
+      ];
+    }
+    // 4-4-2
+    return [
+      { x: 50, y: 88 }, // GK
+      { x: 18, y: 70 }, { x: 38, y: 72 }, { x: 62, y: 72 }, { x: 82, y: 70 }, // 4 DEF
+      { x: 18, y: 48 }, { x: 38, y: 50 }, { x: 62, y: 50 }, { x: 82, y: 48 }, // 4 MID
+      { x: 35, y: 18 }, { x: 65, y: 18 }  // 2 ST
+    ];
+  };
+
+  const positions = getVerticalPositions(formation);
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 space-y-2 flex flex-col">
+      {/* Team Header */}
+      <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 px-1">
+        <div className="font-extrabold text-white text-xs truncate flex items-center space-x-1.5">
+          {team.flagUrl && <img src={team.flagUrl} alt="" className="w-4 h-3 object-cover rounded" />}
+          <span>{team.name}</span>
+        </div>
+        <span className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-emerald-400 font-mono text-[10px] font-bold">
+          {formation}
+        </span>
+      </div>
+
+      {/* Real Football Green Pitch Container */}
+      <div className="relative w-full h-80 sm:h-96 bg-gradient-to-b from-emerald-600 to-emerald-700 rounded-xl overflow-hidden border border-emerald-500/40 shadow-inner">
+        {/* Pitch Field Markings */}
+        <div className="absolute inset-0 border-2 border-white/20 m-2 rounded-lg pointer-events-none" />
+        <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white/20" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-white/20 rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-16 border-b-2 border-x-2 border-white/20" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-16 border-t-2 border-x-2 border-white/20" />
+
+        {/* Render 11 Starting Pitch Players */}
+        {starting11.map((player, idx) => {
+          const pos = positions[idx] || { x: 50, y: 50 };
+          const goalsCount = goalscorers.filter(g => g.name === player.name).length;
+          const subOff = substitutions.find(s => s.playerOut === player.name);
+          const rating = (6.2 + (goalsCount * 1.2) + (idx === 9 ? 1.0 : 0)).toFixed(1);
+
+          return (
+            <div
+              key={idx}
+              className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center group cursor-pointer z-10"
+              style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
+            >
+              {/* Jersey Shirt Graphic */}
+              <div className="relative">
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-white/40 flex items-center justify-center font-bold text-xs shadow-lg transition transform group-hover:scale-110 ${
+                    shirtColor === 'RED' ? 'bg-rose-600 text-white' : 'bg-blue-600 text-white'
+                  }`}
+                >
+                  👕
+                </div>
+
+                {/* Rating Badge */}
+                <div className="absolute -top-1 -right-2 bg-slate-950 border border-white/30 text-amber-300 text-[8px] sm:text-[9px] px-1 rounded-full font-black shadow">
+                  {rating}
+                </div>
+
+                {/* Goal Badge (⚽) */}
+                {goalsCount > 0 && (
+                  <div className="absolute -top-2 -left-2 bg-slate-900 border border-white/40 text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow">
+                    ⚽
+                  </div>
+                )}
+
+                {/* Subbed Out Badge (🔴 ⬇️) */}
+                {subOff && (
+                  <div className="absolute -bottom-1 -left-2 bg-rose-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center font-extrabold shadow">
+                    ⬇️
+                  </div>
+                )}
+              </div>
+
+              {/* Player Short Name */}
+              <span className="text-[9px] sm:text-[10px] font-extrabold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] truncate max-w-[65px] text-center mt-0.5">
+                {player.name.split(' ').pop()}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bench Substitutes Section (Matching Screenshot 2) */}
+      <div className="space-y-1.5 pt-1">
+        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+          📋 BENCH SUBSTITUTES
+        </span>
+        <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+          {bench.map((bPlayer, bIdx) => {
+            const subOn = substitutions.find(s => s.playerIn === bPlayer.name);
+            const bGoals = goalscorers.filter(g => g.name === bPlayer.name).length;
+            const bRating = subOn ? (6.0 + bGoals * 1.1).toFixed(1) : undefined;
+
+            return (
+              <div
+                key={bIdx}
+                className="flex items-center justify-between bg-slate-950/70 border border-slate-800 p-1.5 rounded-lg text-[11px] font-mono text-slate-300"
+              >
+                <div className="flex items-center space-x-1.5 truncate">
+                  <span className="truncate">{bPlayer.name}</span>
+                  {subOn && <span className="text-emerald-400 font-extrabold text-xs">🟢 ⬆️</span>}
+                  {bGoals > 0 && <span>⚽</span>}
+                </div>
+                {bRating && (
+                  <span className="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black text-[9px]">
+                    {bRating}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface LiveMatchSimulatorModalProps {
   isOpen: boolean;
@@ -61,10 +313,25 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     logs: string[];
   } | null>(null);
 
+  // Match Substitutions List
+  const [substitutions, setSubstitutions] = useState<Array<{
+    minute: number;
+    teamName: string;
+    teamFlag: string;
+    playerIn: string;
+    playerOut: string;
+  }>>([]);
+
+  // Formations & Lineups State
+  const [homeFormation, setHomeFormation] = useState<'4-3-3' | '4-2-3-1' | '3-5-2' | '4-4-2'>('4-3-3');
+  const [awayFormation, setAwayFormation] = useState<'4-3-3' | '4-2-3-1' | '3-5-2' | '4-4-2'>('4-2-3-1');
+  const [matchMode, setMatchMode] = useState<'KNOCKOUT' | 'FRIENDLY'>('KNOCKOUT');
+  const [activeViewTab, setActiveViewTab] = useState<'STATS' | 'SUBS' | 'LINEUPS'>('STATS');
+
   // 2D Tactical Radar & Ball/Player Tracking State
   const [ballPos, setBallPos] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
-  const [homePlayerPos, setHomePlayerPos] = useState(HOME_1ST_HALF);
-  const [awayPlayerPos, setAwayPlayerPos] = useState(AWAY_1ST_HALF);
+  const [homePlayerPos, setHomePlayerPos] = useState(getFormationPositions('4-3-3', true));
+  const [awayPlayerPos, setAwayPlayerPos] = useState(getFormationPositions('4-2-3-1', false));
   const [ballActionText, setBallActionText] = useState<string>('Kickoff at center circle');
   const [lastActionType, setLastActionType] = useState<'GOAL' | 'SAVE' | 'SHOT' | 'CARD' | 'PASS' | 'SETPIECE'>('PASS');
 
@@ -137,10 +404,18 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     return () => clearTimeout(timer);
   }, [isPlaying, minute, maxMinute, matchStatus, homeScore, awayScore]);
 
+  // Dynamic Formation Positions Update
+  useEffect(() => {
+    if (minute === 0) {
+      setHomePlayerPos(getFormationPositions(homeFormation, !halfTimeSwapped));
+      setAwayPlayerPos(getFormationPositions(awayFormation, halfTimeSwapped));
+    }
+  }, [homeFormation, awayFormation, halfTimeSwapped, minute]);
+
   // Realistic Individual Player Movement: Only carrier and pressing defender charge to ball!
   const animateIndividualPlayerMovement = (targetX: number, targetY: number, isHomePossession: boolean) => {
-    const currentHomeBase = halfTimeSwapped ? HOME_2ND_HALF : HOME_1ST_HALF;
-    const currentAwayBase = halfTimeSwapped ? AWAY_2ND_HALF : AWAY_1ST_HALF;
+    const currentHomeBase = getFormationPositions(homeFormation, !halfTimeSwapped);
+    const currentAwayBase = getFormationPositions(awayFormation, halfTimeSwapped);
 
     const carrierIdx = Math.floor(Math.random() * 10) + 1; // 1 to 10
     const defenderIdx = Math.floor(Math.random() * 10) + 1;
@@ -201,13 +476,14 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     setHomeScore(0);
     setAwayScore(0);
     setPenaltyResult(null);
+    setSubstitutions([]);
     setMatchStatus('NOT_STARTED');
     setWinnerMessage('');
     setEventsHistory([]);
     setGoalscorers({ home: [], away: [] });
     setBallPos({ x: 50, y: 50 });
-    setHomePlayerPos(HOME_1ST_HALF);
-    setAwayPlayerPos(AWAY_1ST_HALF);
+    setHomePlayerPos(getFormationPositions(homeFormation, true));
+    setAwayPlayerPos(getFormationPositions(awayFormation, false));
     setBallActionText('Kickoff at center circle');
     setLastActionType('PASS');
     setMatchStats({
@@ -255,8 +531,8 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
         ...prev
       ]);
       setBallPos({ x: 50, y: 50 });
-      setHomePlayerPos(HOME_2ND_HALF);
-      setAwayPlayerPos(AWAY_2ND_HALF);
+      setHomePlayerPos(getFormationPositions(homeFormation, false));
+      setAwayPlayerPos(getFormationPositions(awayFormation, true));
       setBallActionText('2nd Half Kickoff! Teams have switched sides.');
       return;
     }
@@ -308,8 +584,8 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
       // RESET BALL TO CENTER & PLAYERS TO FORMATION AFTER GOAL CELEBRATION!
       setTimeout(() => {
         setBallPos({ x: 50, y: 50 });
-        setHomePlayerPos(halfTimeSwapped ? HOME_2ND_HALF : HOME_1ST_HALF);
-        setAwayPlayerPos(halfTimeSwapped ? AWAY_2ND_HALF : AWAY_1ST_HALF);
+        setHomePlayerPos(getFormationPositions(homeFormation, !halfTimeSwapped));
+        setAwayPlayerPos(getFormationPositions(awayFormation, halfTimeSwapped));
         setBallActionText(`⚽ Kickoff restart from center circle after Goal celebration!`);
         setLastActionType('PASS');
       }, 1200);
@@ -424,7 +700,33 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
         ...prev
       ]);
     }
-    // 7. NORMAL BUILD-UP & PASSING
+    // 7. TACTICAL SUBSTITUTION (~15% chance during 50'-88' mins)
+    else if (curMin >= 50 && curMin <= 88 && Math.random() < 0.15 && substitutions.length < 12) {
+      soundFx.playCard();
+      const pOutIdx = Math.floor(Math.random() * 10) + 1;
+      const pInIdx = Math.floor(Math.random() * 5) + 11;
+      const pOut = activeSquad[pOutIdx]?.name || 'Player';
+      const pIn = activeSquad[pInIdx]?.name || 'Substitute';
+
+      setSubstitutions(prev => [
+        { minute: curMin, teamName: activeTeam.name, teamFlag: activeTeam.flagUrl, playerIn: pIn, playerOut: pOut },
+        ...prev
+      ]);
+
+      setEventsHistory(prev => [
+        {
+          minute: curMin,
+          teamName: activeTeam.name,
+          teamFlag: activeTeam.flagUrl,
+          text: `🔄 SUB: ${pIn} 🟢 IN ⬅️ ${pOut} 🔴 OUT (${activeTeam.name})`,
+          type: 'SUB'
+        },
+        ...prev
+      ]);
+      setBallActionText(`🔄 SUB (${curMin}'): ${pIn} replaces ${pOut} for ${activeTeam.name}`);
+      setLastActionType('SETPIECE');
+    }
+    // 8. NORMAL BUILD-UP & PASSING
     else {
       const passX = isHomeEvent
         ? (halfTimeSwapped ? Math.floor(Math.random() * 35) + 25 : Math.floor(Math.random() * 35) + 40)
@@ -437,29 +739,58 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     }
 
     if (curMin >= maxMinute) {
-      handleMatchTimeEnd();
+      handleMatchTimeEnd(curMin);
     }
   };
 
-  const handleMatchTimeEnd = () => {
-    if (minute >= 90 && minute < 120 && homeScore === awayScore && !isExtraTime) {
+  const handleMatchTimeEnd = (currentMin?: number) => {
+    const checkMin = currentMin || minute;
+    if (checkMin >= 90 && checkMin < 120 && homeScore === awayScore && !isExtraTime && matchMode === 'KNOCKOUT') {
       setIsExtraTime(true);
       setMaxMinute(120);
+      setMinute(91);
       soundFx.playCard();
       setEventsHistory(prev => [
         {
           minute: 90,
           teamName: 'EXTRA TIME',
           teamFlag: '',
-          text: `⏱️ 90' FULL TIME TIED (${homeScore} - ${awayScore})! Match goes to EXTRA TIME (30 Mins)!`,
+          text: `⏱️ 90' FULL TIME DRAW (${homeScore} - ${awayScore})! Match goes to EXTRA TIME (30 Mins: 91'-120')!`,
           type: 'INFO'
         },
         ...prev
       ]);
-    } else if (minute >= 120 && homeScore === awayScore && !penaltyResult) {
+      setBallActionText('⏱️ EXTRA TIME KICKOFF! 30 Mins added to break the tie.');
+      return;
+    } else if (checkMin >= 120 && homeScore === awayScore && !penaltyResult && matchMode === 'KNOCKOUT') {
       runPenaltyShootout();
+      return;
     } else {
       finishMatch();
+    }
+  };
+
+  const triggerManualExtraTimeOrPenalties = () => {
+    if (!isExtraTime && minute >= 90) {
+      setIsExtraTime(true);
+      setMaxMinute(120);
+      setMinute(91);
+      setMatchStatus('PLAYING');
+      setIsPlaying(true);
+      soundFx.playCard();
+      setEventsHistory(prev => [
+        {
+          minute: 90,
+          teamName: 'EXTRA TIME',
+          teamFlag: '',
+          text: `⏱️ EXTRA TIME TRIGGERED! 30 Minutes (91'-120') initiated to resolve draw!`,
+          type: 'INFO'
+        },
+        ...prev
+      ]);
+      setBallActionText('⏱️ 30 MINS EXTRA TIME INITIATED!');
+    } else if (minute >= 120 || isExtraTime) {
+      runPenaltyShootout();
     }
   };
 
@@ -608,38 +939,91 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
           {/* Scrollable Content Body */}
           <div className="overflow-y-auto pr-1 space-y-5 pt-3 flex-1 scrollbar-thin">
 
-            {/* Team Pickers */}
-            <div className="grid grid-cols-2 gap-3 bg-slate-950/70 border border-slate-800 rounded-2xl p-3 text-xs">
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Home Team</label>
-                <select
-                  value={homeTeam.id}
-                  onChange={(e) => {
-                    const c = allCountries.find(x => x.id === e.target.value);
-                    if (c) setHomeTeam(c);
-                  }}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-slate-200 focus:outline-none"
-                >
-                  {allCountries.map(c => (
-                    <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
-                  ))}
-                </select>
+            {/* Team Pickers, Formations & Match Rules */}
+            <div className="space-y-2 bg-slate-950/70 border border-slate-800 rounded-2xl p-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Home Team</span>
+                    <span className="text-[10px] font-bold text-emerald-400 font-mono">Formation</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className="flex-1">
+                      <SearchableCountrySelect
+                        selectedCountry={homeTeam}
+                        onSelect={(c) => setHomeTeam(c)}
+                        label=""
+                        allCountries={allCountries}
+                      />
+                    </div>
+                    <select
+                      value={homeFormation}
+                      onChange={(e) => setHomeFormation(e.target.value as any)}
+                      className="bg-slate-900 border border-emerald-500/40 rounded-xl px-2 py-2 text-emerald-400 font-bold focus:outline-none text-xs"
+                    >
+                      <option value="4-3-3">4-3-3</option>
+                      <option value="4-2-3-1">4-2-3-1</option>
+                      <option value="3-5-2">3-5-2</option>
+                      <option value="4-4-2">4-4-2</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Away Team</span>
+                    <span className="text-[10px] font-bold text-amber-400 font-mono">Formation</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <div className="flex-1">
+                      <SearchableCountrySelect
+                        selectedCountry={awayTeam}
+                        onSelect={(c) => setAwayTeam(c)}
+                        label=""
+                        allCountries={allCountries}
+                      />
+                    </div>
+                    <select
+                      value={awayFormation}
+                      onChange={(e) => setAwayFormation(e.target.value as any)}
+                      className="bg-slate-900 border border-amber-500/40 rounded-xl px-2 py-2 text-amber-400 font-bold focus:outline-none text-xs"
+                    >
+                      <option value="4-3-3">4-3-3</option>
+                      <option value="4-2-3-1">4-2-3-1</option>
+                      <option value="3-5-2">3-5-2</option>
+                      <option value="4-4-2">4-4-2</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Away Team</label>
-                <select
-                  value={awayTeam.id}
-                  onChange={(e) => {
-                    const c = allCountries.find(x => x.id === e.target.value);
-                    if (c) setAwayTeam(c);
-                  }}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-slate-200 focus:outline-none"
-                >
-                  {allCountries.map(c => (
-                    <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
-                  ))}
-                </select>
+              {/* Match Rules Mode Selector */}
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tournament Match Rule:</span>
+                <div className="flex items-center space-x-2 font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setMatchMode('KNOCKOUT')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition ${
+                      matchMode === 'KNOCKOUT'
+                        ? 'bg-amber-400 text-slate-950 shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    🏆 Cup Final (ET 120' + Penalties PK)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMatchMode('FRIENDLY')}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition ${
+                      matchMode === 'FRIENDLY'
+                        ? 'bg-emerald-500 text-slate-950 shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    ⚽ Friendly (Ends at 90')
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -814,6 +1198,17 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
                   Step 1 Min
                 </button>
 
+                {/* Manual Extra Time / Penalty Trigger Button when Tied */}
+                {homeScore === awayScore && minute >= 90 && !penaltyResult && (
+                  <button
+                    onClick={triggerManualExtraTimeOrPenalties}
+                    className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 text-xs font-black shadow-lg hover:scale-105 transition flex items-center space-x-1.5 animate-bounce"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    <span>{minute < 120 ? 'Play Extra Time (30 Mins ⏱️)' : 'Start Penalty Shootout 🥅'}</span>
+                  </button>
+                )}
+
                 <button
                   onClick={resetMatch}
                   className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 transition border border-slate-700"
@@ -880,65 +1275,209 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
                   </div>
                 )}
 
-                {/* Match Statistics Header */}
-                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                  <div className="flex items-center space-x-2 text-slate-300 font-bold text-xs uppercase">
-                    <BarChart2 className="w-4 h-4 text-emerald-400" />
-                    <span>Official Match Statistics</span>
-                  </div>
-                  <span className="text-[10px] text-slate-500">FULL-TIME STATS</span>
+                {/* Broadcast Tabs Navigation */}
+                <div className="flex items-center space-x-2 border-b border-slate-800 pb-2">
+                  <button
+                    onClick={() => setActiveViewTab('STATS')}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 transition ${
+                      activeViewTab === 'STATS'
+                        ? 'bg-emerald-500 text-slate-950 shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span>Match Stats</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveViewTab('SUBS')}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 transition ${
+                      activeViewTab === 'SUBS'
+                        ? 'bg-amber-400 text-slate-950 shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>🔄 Substitutions ({substitutions.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveViewTab('LINEUPS')}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 transition ${
+                      activeViewTab === 'LINEUPS'
+                        ? 'bg-teal-400 text-slate-950 shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <span>📋 Lineups & Formations</span>
+                  </button>
                 </div>
 
-                {/* Broadcast Stat Bars */}
-                <div className="space-y-3">
-                  {/* Possession % */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs font-bold text-slate-300">
-                      <span className="text-emerald-400">{matchStats.homePossession}%</span>
-                      <span className="text-slate-400 font-normal uppercase text-[10px]">Ball Possession</span>
-                      <span className="text-teal-400">{matchStats.awayPossession}%</span>
+                {/* TAB 1: MATCH STATS */}
+                {activeViewTab === 'STATS' && (
+                  <div className="space-y-3 pt-1">
+                    {/* Possession % */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs font-bold text-slate-300">
+                        <span className="text-emerald-400">{matchStats.homePossession}%</span>
+                        <span className="text-slate-400 font-normal uppercase text-[10px]">Ball Possession</span>
+                        <span className="text-teal-400">{matchStats.awayPossession}%</span>
+                      </div>
+                      <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden flex border border-slate-800">
+                        <div className="h-full bg-emerald-500" style={{ width: `${matchStats.homePossession}%` }} />
+                        <div className="h-full bg-teal-500" style={{ width: `${matchStats.awayPossession}%` }} />
+                      </div>
                     </div>
-                    <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden flex border border-slate-800">
-                      <div className="h-full bg-emerald-500" style={{ width: `${matchStats.homePossession}%` }} />
-                      <div className="h-full bg-teal-500" style={{ width: `${matchStats.awayPossession}%` }} />
+
+                    {/* Total Shots */}
+                    <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                      <span className="font-bold text-emerald-400 text-xs">{matchStats.homeShots}</span>
+                      <span className="text-slate-400 text-[11px]">Total Shots</span>
+                      <span className="font-bold text-teal-400 text-xs">{matchStats.awayShots}</span>
+                    </div>
+
+                    {/* Shots on Target */}
+                    <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                      <span className="font-bold text-emerald-400 text-xs">{matchStats.homeOnTarget}</span>
+                      <span className="text-slate-400 text-[11px]">Shots On Target</span>
+                      <span className="font-bold text-teal-400 text-xs">{matchStats.awayOnTarget}</span>
+                    </div>
+
+                    {/* Corners */}
+                    <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                      <span className="font-bold text-emerald-400 text-xs">{matchStats.homeCorners}</span>
+                      <span className="text-slate-400 text-[11px]">Corners Taken</span>
+                      <span className="font-bold text-teal-400 text-xs">{matchStats.awayCorners}</span>
+                    </div>
+
+                    {/* Yellow Cards */}
+                    <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                      <span className="font-bold text-amber-400 text-xs">🟨 {matchStats.homeYellows}</span>
+                      <span className="text-slate-400 text-[11px]">Yellow Cards</span>
+                      <span className="font-bold text-amber-400 text-xs">{matchStats.awayYellows} 🟨</span>
+                    </div>
+
+                    {/* Fouls */}
+                    <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
+                      <span className="font-bold text-rose-400 text-xs">{matchStats.homeFouls}</span>
+                      <span className="text-slate-400 text-[11px]">Fouls Committed</span>
+                      <span className="font-bold text-rose-400 text-xs">{matchStats.awayFouls}</span>
                     </div>
                   </div>
+                )}
 
-                  {/* Total Shots */}
-                  <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                    <span className="font-bold text-emerald-400 text-xs">{matchStats.homeShots}</span>
-                    <span className="text-slate-400 text-[11px]">Total Shots</span>
-                    <span className="font-bold text-teal-400 text-xs">{matchStats.awayShots}</span>
-                  </div>
+                {/* TAB 2: SUBSTITUTIONS SUMMARY & TOP PERFORMERS */}
+                {activeViewTab === 'SUBS' && (
+                  <div className="space-y-4 pt-1">
+                    {/* TOP PERFORMERS GREEN CARD (MATCHING USER SCREENSHOT) */}
+                    <div className="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 rounded-2xl p-3.5 text-white shadow-xl space-y-2.5 font-mono">
+                      <div className="text-xs font-black uppercase tracking-wider flex items-center justify-between">
+                        <span className="flex items-center space-x-1.5">
+                          <Star className="w-4 h-4 fill-amber-300 text-amber-300" />
+                          <span>Top Performers</span>
+                        </span>
+                        <span className="text-[10px] bg-slate-950/30 px-2 py-0.5 rounded font-bold">RATING HIGHLIGHTS</span>
+                      </div>
 
-                  {/* Shots on Target */}
-                  <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                    <span className="font-bold text-emerald-400 text-xs">{matchStats.homeOnTarget}</span>
-                    <span className="text-slate-400 text-[11px]">Shots On Target</span>
-                    <span className="font-bold text-teal-400 text-xs">{matchStats.awayOnTarget}</span>
-                  </div>
+                      <div className="grid grid-cols-3 gap-2 text-center pt-1">
+                        {[
+                          { player: goalscorers.home[0]?.name || homeSquad[0]?.name || 'H. Kane', pos: 'ST | ' + homeTeam.name, rating: '7.7' },
+                          { player: goalscorers.away[0]?.name || awaySquad[0]?.name || 'J. Musiala', pos: 'CAM | ' + awayTeam.name, rating: '7.5' },
+                          { player: homeSquad[2]?.name || 'Gavi', pos: 'CM | ' + homeTeam.name, rating: '7.2' },
+                        ].map((tp, idx) => (
+                          <div key={idx} className="bg-slate-950/20 backdrop-blur border border-white/20 rounded-xl p-2 space-y-1 flex flex-col items-center justify-between">
+                            <div className="relative w-8 h-8 rounded-full bg-rose-600 border border-white/40 flex items-center justify-center font-bold text-xs shadow-md">
+                              👕
+                              <span className="absolute -top-1 -right-2 bg-slate-900 border border-white/40 text-amber-300 text-[9px] px-1 rounded-full font-black">
+                                {tp.rating}
+                              </span>
+                            </div>
+                            <div className="font-extrabold text-xs text-white truncate w-full">{tp.player}</div>
+                            <div className="text-[9px] opacity-80 font-mono truncate w-full">{tp.pos}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* Corners */}
-                  <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                    <span className="font-bold text-emerald-400 text-xs">{matchStats.homeCorners}</span>
-                    <span className="text-slate-400 text-[11px]">Corners Taken</span>
-                    <span className="font-bold text-teal-400 text-xs">{matchStats.awayCorners}</span>
-                  </div>
+                    {/* FOTMOB / GOOGLE SPORTS STYLED SUBSTITUTIONS TIMELINE */}
+                    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 space-y-3 font-mono">
+                      <div className="text-xs font-bold text-slate-300 uppercase tracking-wider border-b border-slate-800 pb-1.5 flex items-center justify-between">
+                        <span className="text-amber-400">⚡ Match Substitutions Timeline</span>
+                        <span className="text-[10px] text-slate-500 font-normal">{substitutions.length} SUBS MADE</span>
+                      </div>
 
-                  {/* Yellow Cards */}
-                  <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                    <span className="font-bold text-amber-400 text-xs">🟨 {matchStats.homeYellows}</span>
-                    <span className="text-slate-400 text-[11px]">Yellow Cards</span>
-                    <span className="font-bold text-amber-400 text-xs">{matchStats.awayYellows} 🟨</span>
-                  </div>
+                      {substitutions.length > 0 ? (
+                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                          {substitutions.map((sub, idx) => {
+                            const isHomeSub = sub.teamName === homeTeam.name;
+                            return (
+                              <div key={idx} className="grid grid-cols-5 items-center text-xs">
+                                {/* Home Sub Column (Left) */}
+                                <div className="col-span-2 text-left">
+                                  {isHomeSub ? (
+                                    <div className="flex items-center space-x-1.5 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                                      <span className="text-emerald-400 font-bold">🟢 {sub.playerIn}</span>
+                                      <span className="text-rose-400 text-[10px]">🔴 {sub.playerOut}</span>
+                                    </div>
+                                  ) : (
+                                    <div />
+                                  )}
+                                </div>
 
-                  {/* Fouls */}
-                  <div className="flex justify-between items-center bg-slate-900/60 p-2 rounded-lg border border-slate-800/80">
-                    <span className="font-bold text-rose-400 text-xs">{matchStats.homeFouls}</span>
-                    <span className="text-slate-400 text-[11px]">Fouls Committed</span>
-                    <span className="font-bold text-rose-400 text-xs">{matchStats.awayFouls}</span>
+                                {/* Minute Badge (Center) */}
+                                <div className="text-center">
+                                  <span className="font-extrabold text-[10px] px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-amber-300">
+                                    {sub.minute}'
+                                  </span>
+                                </div>
+
+                                {/* Away Sub Column (Right) */}
+                                <div className="col-span-2 text-right">
+                                  {!isHomeSub ? (
+                                    <div className="flex items-center justify-end space-x-1.5 bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                                      <span className="text-emerald-400 font-bold">{sub.playerIn} 🟢</span>
+                                      <span className="text-rose-400 text-[10px]">{sub.playerOut} 🔴</span>
+                                    </div>
+                                  ) : (
+                                    <div />
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-slate-500 text-center py-6 text-xs">No tactical substitutions recorded yet. Play match to simulate subs!</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* TAB 3: TEAM LINEUPS & FORMATIONS */}
+                {activeViewTab === 'LINEUPS' && (
+                  <div className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      {/* Home Team FotMob Pitch */}
+                      <FotMobPitchCard
+                        team={homeTeam}
+                        squad={homeSquad}
+                        formation={homeFormation}
+                        shirtColor="RED"
+                        goalscorers={goalscorers.home}
+                        substitutions={substitutions}
+                      />
+
+                      {/* Away Team FotMob Pitch */}
+                      <FotMobPitchCard
+                        team={awayTeam}
+                        squad={awaySquad}
+                        formation={awayFormation}
+                        shirtColor="BLUE"
+                        goalscorers={goalscorers.away}
+                        substitutions={substitutions}
+                      />
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
 
