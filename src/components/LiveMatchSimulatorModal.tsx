@@ -4,7 +4,10 @@ import { useSimulatorStore } from '../store/useSimulatorStore';
 import { getFullFootballSquad, FootballPlayerProfile } from '../engine/playerNames';
 import { fetchGoalHighlightsFromApi, getRandomGoalHighlight } from '../engine/goalHighlightsData';
 import { soundFx } from '../utils/soundFx';
-import { X, Play, Pause, RotateCcw, Zap, Flame, Shield, Trophy, Activity, Award, Star, BarChart2 } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Zap, Flame, Shield, Trophy, Activity, Award, Star, BarChart2, Tv, Target } from 'lucide-react';
+import { VarReviewModal, VarReviewData } from './VarReviewModal';
+import { PenaltyShootoutModal } from './PenaltyShootoutModal';
+import { FutPlayerCardModal } from './FutPlayerCardModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const getFormationPositions = (formation: '4-3-3' | '4-2-3-1' | '3-5-2' | '4-4-2', isLeft: boolean) => {
@@ -314,6 +317,29 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     logs: string[];
   } | null>(null);
 
+  // VAR Review System & Sudden Death Penalty Shootout State
+  const [isVarOpen, setIsVarOpen] = useState(false);
+  const [varReviewData, setVarReviewData] = useState<VarReviewData | null>(null);
+  const [isPenaltyShootoutOpen, setIsPenaltyShootoutOpen] = useState(false);
+  const [selectedFutPlayer, setSelectedFutPlayer] = useState<{
+    player: FootballPlayerProfile;
+    teamName: string;
+    teamFlag: string;
+    goals: number;
+  } | null>(null);
+
+  const handleCloseVar = () => {
+    setIsVarOpen(false);
+    if (minute < maxMinute) {
+      setIsPlaying(true);
+    }
+  };
+
+  // Manager Tactics & Pitch Heatmap Engine
+  const [activeTactics, setActiveTactics] = useState<'BALANCED' | 'HIGH_PRESS' | 'COUNTER_ATTACK' | 'TIKI_TAKA' | 'PARK_THE_BUS'>('BALANCED');
+  const [showPitchHeatmap, setShowPitchHeatmap] = useState(false);
+  const [heatMapPoints, setHeatMapPoints] = useState<Array<{ x: number; y: number; intensity: number }>>([]);
+
   // Match Substitutions List
   const [substitutions, setSubstitutions] = useState<Array<{
     minute: number;
@@ -548,13 +574,56 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
     const randomPlayer = activeSquad[Math.floor(Math.random() * activeSquad.length)]?.name || 'Player';
     const randomDef = defSquad[Math.floor(Math.random() * defSquad.length)]?.name || 'Defender';
 
+    // Record pitch heatmap action position
+    setHeatMapPoints(prev => [
+      { x: ballPos.x, y: ballPos.y, intensity: Math.random() * 0.7 + 0.3 },
+      ...prev.slice(0, 45)
+    ]);
+
+    // Tactical Manager Adjustments
+    let goalProbThreshold = 0.04;
+    if (activeTactics === 'HIGH_PRESS') goalProbThreshold = 0.065;
+    else if (activeTactics === 'COUNTER_ATTACK') goalProbThreshold = 0.055;
+    else if (activeTactics === 'PARK_THE_BUS') goalProbThreshold = 0.015;
+
     // Target goal net depends on half-time side swap
     const homeTargetGoalX = halfTimeSwapped ? 4 : 96;
     const awayTargetGoalX = halfTimeSwapped ? 96 : 4;
     const targetGoalX = isHomeEvent ? homeTargetGoalX : awayTargetGoalX;
 
-    // 1. GOAL Chance (~4% per minute)
-    if (rand < 0.04) {
+    // 1. GOAL Chance
+    if (rand < goalProbThreshold) {
+      const isVarTriggered = Math.random() < 0.32; // 32% chance of VAR review on goals
+      const isCancelled = isVarTriggered && Math.random() < 0.5; // 50% of VAR reviews result in Offside/No Goal
+
+      if (isVarTriggered) {
+        setIsPlaying(false); // PAUSE LIVE MATCH IMMEDIATELY FOR VAR REVIEW!
+        setVarReviewData({
+          playerName: randomPlayer,
+          teamName: activeTeam.name,
+          reviewType: 'OFFSIDE',
+          originalDecision: 'GOAL',
+          finalDecision: isCancelled ? 'GOAL_CANCELLED' : 'GOAL_CONFIRMED',
+          offsideMarginCm: 3.2
+        });
+        setIsVarOpen(true);
+      }
+
+      if (isCancelled) {
+        setEventsHistory(prev => [
+          {
+            minute: curMin,
+            teamName: activeTeam.name,
+            teamFlag: activeTeam.flagUrl,
+            text: `📺 VAR REVIEW: GOAL OVERTURNED! ${randomPlayer} was caught OFFSIDE!`,
+            type: 'INFO'
+          },
+          ...prev
+        ]);
+        setBallActionText(`📺 VAR: No Goal! ${randomPlayer} was caught OFFSIDE.`);
+        return;
+      }
+
       soundFx.playGoal();
       const pattern = getRandomGoalHighlight(targetGoalX > 50 ? 'right' : 'left');
 
@@ -589,7 +658,9 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
           minute: curMin,
           teamName: activeTeam.name,
           teamFlag: activeTeam.flagUrl,
-          text: `⚽ GOAL! Unbelievable strike by ${randomPlayer}! Smashed into the top corner!`,
+          text: isVarTriggered
+            ? `⚽ GOAL CONFIRMED BY VAR! ${randomPlayer} was ON-SIDE!`
+            : `⚽ GOAL! Unbelievable strike by ${randomPlayer}! Smashed into top corner!`,
           type: 'GOAL'
         },
         ...prev
@@ -777,10 +848,30 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
       setBallActionText('⏱️ EXTRA TIME KICKOFF! 30 Mins added to break the tie.');
       return;
     } else if (checkMin >= 120 && homeScore === awayScore && !penaltyResult && matchMode === 'KNOCKOUT') {
-      runPenaltyShootout();
+      setIsPlaying(false);
+      setIsPenaltyShootoutOpen(true);
       return;
     } else {
       finishMatch();
+    }
+  };
+
+  const handleShootoutComplete = (winner: Country, hPen: number, aPen: number) => {
+    setPenaltyResult({
+      homePen: hPen,
+      awayPen: aPen,
+      isPenalties: true,
+      logs: [`Penalty Shootout: ${homeTeam.name} ${hPen} - ${aPen} ${awayTeam.name}`]
+    });
+    setIsPenaltyShootoutOpen(false);
+    setIsPlaying(false);
+    setMatchStatus('FINISHED');
+    soundFx.playFanfare();
+
+    if (hPen > aPen) {
+      setWinnerMessage(`🏆 ${homeTeam.name} WON THE PENALTY SHOOTOUT (${hPen} - ${aPen})! 🎉`);
+    } else {
+      setWinnerMessage(`🏆 ${awayTeam.name} WON THE PENALTY SHOOTOUT (${hPen} - ${aPen})! 🎉`);
     }
   };
 
@@ -1078,22 +1169,133 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
               {(goalscorers.home.length > 0 || goalscorers.away.length > 0) && (
                 <div className="grid grid-cols-2 gap-2 text-[11px] font-mono pt-2 border-t border-slate-800/80 text-slate-400">
                   <div className="text-left space-y-0.5">
-                    {goalscorers.home.map((g, i) => (
-                      <div key={i} className="truncate">⚽ {g.name} {g.minute}'</div>
-                    ))}
+                    {goalscorers.home.map((g, i) => {
+                      const pObj: FootballPlayerProfile = homeSquad.find(p => p.name === g.name) || { name: g.name, position: 'ST', ovr: 89 };
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setSelectedFutPlayer({ player: pObj, teamName: homeTeam.name, teamFlag: homeTeam.flagUrl, goals: 1 })}
+                          className="block truncate text-left hover:text-amber-300 font-bold transition cursor-pointer"
+                          title="Click to View EA FC 99 Player Card 🃏"
+                        >
+                          ⚽ {g.name} {g.minute}' <span className="text-[9px] text-amber-400">🃏</span>
+                        </button>
+                      );
+                    })}
                   </div>
                   <div className="text-right space-y-0.5">
-                    {goalscorers.away.map((g, i) => (
-                      <div key={i} className="truncate">{g.name} {g.minute}' ⚽</div>
-                    ))}
+                    {goalscorers.away.map((g, i) => {
+                      const pObj: FootballPlayerProfile = awaySquad.find(p => p.name === g.name) || { name: g.name, position: 'ST', ovr: 89 };
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setSelectedFutPlayer({ player: pObj, teamName: awayTeam.name, teamFlag: awayTeam.flagUrl, goals: 1 })}
+                          className="block truncate text-right w-full hover:text-amber-300 font-bold transition cursor-pointer"
+                          title="Click to View EA FC 99 Player Card 🃏"
+                        >
+                          <span className="text-[9px] text-amber-400">🃏</span> {g.name} {g.minute}' ⚽
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
+
+              {/* MANAGER TACTICS & HEATMAP TOOLBAR */}
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800 text-xs my-1">
+                <div className="flex items-center space-x-1.5 overflow-x-auto pr-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center space-x-1">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Tactics:</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTactics('BALANCED')}
+                    className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition ${
+                      activeTactics === 'BALANCED' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    Balanced
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTactics('HIGH_PRESS')}
+                    className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition flex items-center space-x-1 ${
+                      activeTactics === 'HIGH_PRESS' ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Flame className="w-3 h-3 text-rose-400" />
+                    <span>High Press 🔥</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTactics('COUNTER_ATTACK')}
+                    className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition flex items-center space-x-1 ${
+                      activeTactics === 'COUNTER_ATTACK' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Zap className="w-3 h-3 text-amber-400" />
+                    <span>Counter ⚡</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTactics('PARK_THE_BUS')}
+                    className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition flex items-center space-x-1 ${
+                      activeTactics === 'PARK_THE_BUS' ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                    }`}
+                  >
+                    <Shield className="w-3 h-3 text-blue-400" />
+                    <span>Park Bus 🛡️</span>
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPitchHeatmap(!showPitchHeatmap)}
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-bold transition flex items-center space-x-1.5 ${
+                    showPitchHeatmap
+                      ? 'bg-rose-500 text-white border-rose-400 font-extrabold shadow-lg'
+                      : 'bg-slate-900 text-rose-400 border-slate-800 hover:border-slate-700'
+                  }`}
+                  title="Toggle Live Pitch Action Heatmap Overlay"
+                >
+                  <Flame className="w-3.5 h-3.5" />
+                  <span>Heatmap {showPitchHeatmap ? 'ON 🔥' : 'OFF ❄️'}</span>
+                </button>
+              </div>
 
               {/* 2D REAL-TIME TACTICAL PITCH RADAR & BALL TRACKER */}
               <div className="relative w-full h-44 sm:h-56 rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 border-2 border-emerald-500/40 overflow-hidden shadow-2xl font-mono select-none my-2">
                 {/* Pitch Grass Texture & Marking Lines */}
                 <div className="absolute inset-0 opacity-20 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:16px_16px]" />
+                
+                {/* Heatmap Overlay Points */}
+                {showPitchHeatmap && heatMapPoints.length > 0 && (
+                  <div className="absolute inset-0 z-0 pointer-events-none opacity-75">
+                    {heatMapPoints.map((pt, i) => (
+                      <div
+                        key={i}
+                        className="absolute rounded-full blur-sm transition-all duration-500"
+                        style={{
+                          left: `${pt.x}%`,
+                          top: `${pt.y}%`,
+                          width: `${pt.intensity * 28 + 14}px`,
+                          height: `${pt.intensity * 28 + 14}px`,
+                          transform: 'translate(-50%, -50%)',
+                          background: pt.intensity > 0.55
+                            ? 'radial-gradient(circle, rgba(239,68,68,0.85) 0%, rgba(245,158,11,0.5) 50%, transparent 100%)'
+                            : 'radial-gradient(circle, rgba(245,158,11,0.7) 0%, rgba(16,185,129,0.4) 50%, transparent 100%)'
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 
                 {/* Center Pitch Line */}
                 <div className="absolute top-0 bottom-0 left-1/2 w-[2px] bg-white/40 -translate-x-1/2" />
@@ -1537,6 +1739,34 @@ export const LiveMatchSimulatorModal: React.FC<LiveMatchSimulatorModalProps> = (
           </div>
         </motion.div>
       </div>
+
+      {/* TV VAR Decision Review System Modal */}
+      <VarReviewModal
+        isOpen={isVarOpen}
+        onClose={handleCloseVar}
+        reviewData={varReviewData}
+      />
+
+      {/* Interactive Sudden Death Penalty Shootout Modal */}
+      <PenaltyShootoutModal
+        isOpen={isPenaltyShootoutOpen}
+        onClose={() => setIsPenaltyShootoutOpen(false)}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeSquad={homeSquad}
+        awaySquad={awaySquad}
+        onShootoutComplete={handleShootoutComplete}
+      />
+
+      {/* EA FC 99 Ultimate Team Player Card Modal */}
+      <FutPlayerCardModal
+        isOpen={!!selectedFutPlayer}
+        onClose={() => setSelectedFutPlayer(null)}
+        player={selectedFutPlayer?.player || null}
+        teamName={selectedFutPlayer?.teamName || ''}
+        teamFlag={selectedFutPlayer?.teamFlag || ''}
+        goalsScored={selectedFutPlayer?.goals || 0}
+      />
     </AnimatePresence>
   );
 };

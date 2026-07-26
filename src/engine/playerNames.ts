@@ -26,10 +26,10 @@ const SPECIFIC_COUNTRY_BANKS: Record<string, { strikers: string[]; midfielders: 
     goalkeepers: ['Pickford', 'Ramsdale', 'Pope']
   },
   GER: {
-    strikers: ['Fullkrug', 'Havertz', 'Sané', 'Gnabry', 'Beier'],
-    midfielders: ['Musiala', 'Wirtz', 'Kimmich', 'Goretzka', 'Andrich'],
-    defenders: ['Rudiger', 'Tah', 'Raum', 'Kimmich', 'Schlotterbeck'],
-    goalkeepers: ['Neuer', 'Ter Stegen', 'Nubel']
+    strikers: ['Kai Havertz', 'Nick Woltemade', 'Maximilian Beier', 'Deniz Undav'],
+    midfielders: ['Aleksandar Pavlovic', 'Leon Goretzka', 'Jamie Leweling', 'Jamal Musiala', 'Pascal Groß', 'Angelo Stiller', 'Florian Wirtz', 'Leroy Sané', 'Nadiem Amiri', 'Felix Nmecha', 'Assan Ouédraogo'],
+    defenders: ['Antonio Rüdiger', 'Waldemar Anton', 'Jonathan Tah', 'Joshua Kimmich', 'Nico Schlotterbeck', 'Nathaniel Brown', 'David Raum', 'Malick Thiaw'],
+    goalkeepers: ['Manuel Neuer', 'Oliver Baumann', 'Alexander Nübel']
   },
   ESP: {
     strikers: ['Morata', 'Yamal', 'Williams', 'Oyarzabal', 'Torres'],
@@ -120,12 +120,25 @@ const REGIONAL_NAME_BANKS: Record<string, { strikers: string[]; midfielders: str
   }
 };
 
+function normalizeCountryId(id: string): string {
+  const upper = (id || '').toUpperCase().trim();
+  if (upper === 'DE' || upper === 'DEU' || upper === 'GERMAN' || upper === 'GERMANY') return 'GER';
+  if (upper === 'AR' || upper === 'ARG' || upper === 'ARGENTINA') return 'ARG';
+  if (upper === 'FR' || upper === 'FRA' || upper === 'FRANCE') return 'FRA';
+  if (upper === 'BR' || upper === 'BRA' || upper === 'BRAZIL') return 'BRA';
+  if (upper === 'ES' || upper === 'ESP' || upper === 'SPAIN') return 'ESP';
+  if (upper === 'PT' || upper === 'POR' || upper === 'PORTUGAL') return 'POR';
+  if (upper === 'IT' || upper === 'ITA' || upper === 'ITALY') return 'ITA';
+  if (upper === 'GB' || upper === 'ENG' || upper === 'ENGLAND') return 'ENG';
+  return upper;
+}
+
 export function getRandomPlayerName(
   countryId: string,
   region: string,
   position: 'strikers' | 'midfielders' | 'defenders' | 'goalkeepers' = 'strikers'
 ): string {
-  const upperId = (countryId || '').toUpperCase();
+  const upperId = normalizeCountryId(countryId);
 
   if (SPECIFIC_COUNTRY_BANKS[upperId] && SPECIFIC_COUNTRY_BANKS[upperId][position]?.length > 0) {
     const list = SPECIFIC_COUNTRY_BANKS[upperId][position];
